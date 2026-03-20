@@ -1,11 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MOCK_PORTFOLIO } from '../constants';
-import { Artwork } from '../types';
-import { X, Maximize2, Tag } from 'lucide-react';
+import { Artwork, ArtStyle } from '../types';
+import { X, Maximize2, Tag, Search, Filter, ChevronDown } from 'lucide-react';
+import { cn } from '@/src/utils/cn';
 
 export default function Portfolio() {
   const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState<string>('all');
+  const [visibleCount, setVisibleCount] = useState(9);
+
+  const styles = ['all', 'flow-field', 'particle-system', 'geometric-grid', 'organic-blob', 'noise-landscape', 'translucent-discs', 'organic-mandalas', 'connected-grid', 'abstract-score', 'flowing-bars', 'glitch-topography'];
+
+  const filteredArtworks = useMemo(() => {
+    return MOCK_PORTFOLIO.filter(art => {
+      const matchesSearch = art.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                           art.tags.some((t: string) => t.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesFilter = activeFilter === 'all' || art.style === activeFilter;
+      return matchesSearch && matchesFilter;
+    });
+  }, [searchQuery, activeFilter]);
+
+  const visibleArtworks = filteredArtworks.slice(0, visibleCount);
 
   return (
     <div className="space-y-16">
@@ -17,45 +34,99 @@ export default function Portfolio() {
         </p>
       </header>
 
+      {/* Search and Filter */}
+      <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center py-8 border-y border-ink/10">
+        <div className="relative w-full md:w-96">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30" size={18} />
+          <input 
+            type="text"
+            placeholder="Search artifacts or tags..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 brutalist-border bg-white text-sm focus:outline-none focus:ring-2 ring-accent/20"
+          />
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {styles.map(style => (
+            <button
+              key={style}
+              onClick={() => setActiveFilter(style)}
+              className={cn(
+                "px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-all",
+                activeFilter === style ? "bg-ink text-white" : "hover:bg-ink/5 border border-ink/10"
+              )}
+            >
+              {style.replace('-', ' ')}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {MOCK_PORTFOLIO.map((art, index) => (
-          <motion.div
-            key={art.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="group cursor-pointer"
-            onClick={() => setSelectedArtwork(art)}
-          >
-            <div className="aspect-square brutalist-border bg-white relative overflow-hidden mb-4">
-              {/* Placeholder for actual generated art thumbnail */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-10 group-hover:opacity-20 transition-opacity">
-                <div className="w-full h-full bg-gradient-to-br from-accent to-ink rotate-45 scale-150" />
+        <AnimatePresence mode="popLayout">
+          {visibleArtworks.map((art, index) => (
+            <motion.div
+              key={art.id}
+              layout
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.3 }}
+              className="group cursor-pointer"
+              onClick={() => setSelectedArtwork(art)}
+            >
+              <div className="aspect-square brutalist-border bg-white relative overflow-hidden mb-4">
+                <div className="absolute inset-0 flex items-center justify-center opacity-10 group-hover:opacity-20 transition-opacity">
+                  <div className="w-full h-full bg-gradient-to-br from-accent to-ink rotate-45 scale-150" />
+                </div>
+                
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-ink/5 backdrop-blur-sm">
+                  <Maximize2 className="text-ink" size={32} />
+                </div>
               </div>
               
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-ink/5 backdrop-blur-sm">
-                <Maximize2 className="text-ink" size={32} />
+              <div className="space-y-2">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-xl font-black uppercase tracking-tight group-hover:text-accent transition-colors">{art.title}</h3>
+                  <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">{art.style.replace('-', ' ')}</span>
+                </div>
+                <p className="text-sm opacity-60 line-clamp-2">{art.description}</p>
+                <div className="flex gap-2 pt-2">
+                  {art.tags.map((tag: string) => (
+                    <span key={tag} className="text-[9px] uppercase font-bold tracking-widest px-2 py-1 bg-ink/5 rounded-full">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between items-start">
-                <h3 className="text-xl font-black uppercase tracking-tight">{art.title}</h3>
-                <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">{art.style.replace('-', ' ')}</span>
-              </div>
-              <p className="text-sm opacity-60 line-clamp-2">{art.description}</p>
-              <div className="flex gap-2 pt-2">
-                {art.tags.map((tag: string) => (
-                  <span key={tag} className="text-[9px] uppercase font-bold tracking-widest px-2 py-1 bg-ink/5 rounded-full">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
+
+      {/* Load More */}
+      {visibleCount < filteredArtworks.length && (
+        <div className="flex justify-center pt-12">
+          <button 
+            onClick={() => setVisibleCount(prev => prev + 6)}
+            className="brutalist-button flex items-center gap-2"
+          >
+            See More <ChevronDown size={18} />
+          </button>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {filteredArtworks.length === 0 && (
+        <div className="py-20 text-center space-y-4">
+          <p className="text-2xl font-display italic opacity-40">No artifacts found matching your criteria.</p>
+          <button onClick={() => { setSearchQuery(''); setActiveFilter('all'); }} className="text-accent font-bold uppercase tracking-widest text-xs hover:underline">
+            Clear all filters
+          </button>
+        </div>
+      )}
 
       {/* Modal */}
       <AnimatePresence>
@@ -122,3 +193,4 @@ export default function Portfolio() {
     </div>
   );
 }
+

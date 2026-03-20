@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Upload, FileText, Settings, Download, Play, RefreshCw, Layers, Palette, Sliders } from 'lucide-react';
 import { ArtStyle, ArtSettings, DataPoint } from '../types';
 import { PALETTES } from '../constants';
+import { cn } from '../utils/cn';
 import GenerativeCanvas from '../components/GenerativeCanvas';
 import * as d3 from 'd3';
 
@@ -61,18 +62,18 @@ export default function Create() {
     const canvas = document.querySelector('canvas');
     if (!canvas) return;
     const link = document.createElement('a');
-    link.download = `aether-artifact-${Date.now()}.png`;
+    link.download = `dataloom-artifact-${Date.now()}.png`;
     link.href = canvas.toDataURL();
     link.click();
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 min-h-[calc(100vh-12rem)]">
+    <div className="flex flex-col lg:flex-row gap-8 min-h-[800px] h-full w-full">
       {/* Sidebar Controls */}
       <motion.aside 
         initial={false}
         animate={{ width: isSidebarOpen ? 'auto' : '4rem' }}
-        className="lg:w-96 flex flex-col gap-6"
+        className="lg:w-96 flex flex-col gap-6 shrink-0"
       >
         <div className="brutalist-border bg-white p-6 space-y-8 overflow-y-auto max-h-[80vh] lg:max-h-none">
           {/* Data Input */}
@@ -104,7 +105,7 @@ export default function Create() {
               <Layers size={14} /> Visual Style
             </div>
             <div className="grid grid-cols-1 gap-2">
-              {(['flow-field', 'particle-system', 'geometric-grid', 'organic-blob', 'noise-landscape'] as ArtStyle[]).map(s => (
+              {(['flow-field', 'particle-system', 'geometric-grid', 'organic-blob', 'noise-landscape', 'translucent-discs', 'organic-mandalas', 'connected-grid', 'abstract-score', 'flowing-bars', 'glitch-topography'] as ArtStyle[]).map(s => (
                 <button
                   key={s}
                   onClick={() => setStyle(s)}

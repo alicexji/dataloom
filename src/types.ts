@@ -2,7 +2,18 @@ export interface DataPoint {
   [key: string]: any;
 }
 
-export type ArtStyle = 'flow-field' | 'particle-system' | 'geometric-grid' | 'organic-blob' | 'noise-landscape';
+export type ArtStyle = 
+  | 'flow-field' 
+  | 'particle-system' 
+  | 'geometric-grid' 
+  | 'organic-blob' 
+  | 'noise-landscape'
+  | 'translucent-discs'
+  | 'organic-mandalas'
+  | 'connected-grid'
+  | 'abstract-score'
+  | 'flowing-bars'
+  | 'glitch-topography';
 
 export interface ArtSettings {
   palette: string[];

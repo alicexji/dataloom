@@ -29,6 +29,7 @@ export default function App() {
 
   return (
     <Layout activePage={activePage} onNavigate={setActivePage}>
+      <div className="grain-overlay" />
       <AnimatePresence mode="wait">
         <motion.div
           key={activePage}

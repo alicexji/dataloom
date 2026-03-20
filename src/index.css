@@ -55,6 +55,19 @@
   transition-duration: 150ms;
 }
 
+@utility perspective-1000 {
+  perspective: 1000px;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 60s linear infinite;
+}
+
 .brutalist-button:hover {
   transform: translate(-0.25rem, -0.25rem);
   box-shadow: 8px 8px 0px 0px rgba(10,10,10,1);

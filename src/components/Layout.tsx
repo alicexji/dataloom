@@ -28,7 +28,7 @@ export default function Layout({ children, activePage, onNavigate }: LayoutProps
           onClick={() => onNavigate('home')}
           className="font-display text-2xl font-black tracking-tighter uppercase"
         >
-          Aether
+          DataLoom
         </button>
 
         <div className="hidden md:flex gap-12 items-center">
