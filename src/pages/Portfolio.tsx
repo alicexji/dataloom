@@ -11,7 +11,7 @@ export default function Portfolio() {
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [visibleCount, setVisibleCount] = useState(9);
 
-  const styles = ['all', 'flow-field', 'particle-system', 'geometric-grid', 'organic-blob', 'noise-landscape', 'translucent-discs', 'organic-mandalas', 'connected-grid', 'abstract-score', 'flowing-bars', 'glitch-topography'];
+  const styles = ['all', 'structural-dots', 'data-grid-composition', 'radial-pathway', 'shape-overlap', 'connected-grid', 'flow-field', 'particle-system', 'geometric-grid', 'organic-blob', 'noise-landscape', 'translucent-discs'];
 
   const filteredArtworks = useMemo(() => {
     return MOCK_PORTFOLIO.filter(art => {
@@ -78,9 +78,18 @@ export default function Portfolio() {
               onClick={() => setSelectedArtwork(art)}
             >
               <div className="aspect-square brutalist-border bg-white relative overflow-hidden mb-4">
-                <div className="absolute inset-0 flex items-center justify-center opacity-10 group-hover:opacity-20 transition-opacity">
-                  <div className="w-full h-full bg-gradient-to-br from-accent to-ink rotate-45 scale-150" />
-                </div>
+                {art.thumbnail ? (
+                  <img 
+                    src={art.thumbnail} 
+                    alt={art.title} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center opacity-10 group-hover:opacity-20 transition-opacity">
+                    <div className="w-full h-full bg-gradient-to-br from-accent to-ink rotate-45 scale-150" />
+                  </div>
+                )}
                 
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-ink/5 backdrop-blur-sm">
                   <Maximize2 className="text-ink" size={32} />
@@ -146,10 +155,21 @@ export default function Portfolio() {
 
             <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div className="aspect-square brutalist-border bg-white relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-ink/20 animate-pulse" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <p className="text-xs uppercase tracking-[0.5em] font-bold opacity-20 italic">Visualizing {selectedArtwork.title}...</p>
-                </div>
+                {selectedArtwork.thumbnail ? (
+                  <img 
+                    src={selectedArtwork.thumbnail} 
+                    alt={selectedArtwork.title} 
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-ink/20 animate-pulse" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <p className="text-xs uppercase tracking-[0.5em] font-bold opacity-20 italic">Visualizing {selectedArtwork.title}...</p>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="space-y-8">

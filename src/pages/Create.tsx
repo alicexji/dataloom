@@ -28,7 +28,7 @@ const SAMPLE_DATA: DataPoint[] = Array.from({ length: 100 }, (_, i) => ({
 
 export default function Create() {
   const [data, setData] = useState<DataPoint[]>(SAMPLE_DATA);
-  const [style, setStyle] = useState<ArtStyle>('flow-field');
+  const [style, setStyle] = useState<ArtStyle>('data-grid-composition');
   const [settings, setSettings] = useState<ArtSettings>(DEFAULT_SETTINGS);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [dataKeys, setDataKeys] = useState<string[]>(Object.keys(SAMPLE_DATA[0]));
@@ -105,7 +105,7 @@ export default function Create() {
               <Layers size={14} /> Visual Style
             </div>
             <div className="grid grid-cols-1 gap-2">
-              {(['flow-field', 'particle-system', 'geometric-grid', 'organic-blob', 'noise-landscape', 'translucent-discs', 'organic-mandalas', 'connected-grid', 'abstract-score', 'flowing-bars', 'glitch-topography'] as ArtStyle[]).map(s => (
+              {(['structural-dots', 'data-grid-composition', 'radial-pathway', 'shape-overlap', 'connected-grid', 'flow-field', 'particle-system', 'geometric-grid', 'organic-blob', 'noise-landscape', 'translucent-discs'] as ArtStyle[]).map(s => (
                 <button
                   key={s}
                   onClick={() => setStyle(s)}

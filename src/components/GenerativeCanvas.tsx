@@ -34,7 +34,15 @@ export default function GenerativeCanvas({ data, style, settings, className }: G
     const render = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      if (style === 'particle-system') {
+      if (style === 'data-grid-composition') {
+        renderDataGridComposition(ctx, canvas.width, canvas.height, data, settings);
+      } else if (style === 'radial-pathway') {
+        renderRadialPathway(ctx, canvas.width, canvas.height, data, settings);
+      } else if (style === 'shape-overlap') {
+        renderShapeOverlap(ctx, canvas.width, canvas.height, data, settings);
+      } else if (style === 'connected-grid') {
+        renderConnectedGrid(ctx, canvas.width, canvas.height, data, settings);
+      } else if (style === 'particle-system') {
         renderParticles(ctx, canvas.width, canvas.height, data, settings);
       } else if (style === 'geometric-grid') {
         renderGrid(ctx, canvas.width, canvas.height, data, settings);
@@ -46,16 +54,8 @@ export default function GenerativeCanvas({ data, style, settings, className }: G
         renderNoise(ctx, canvas.width, canvas.height, data, settings);
       } else if (style === 'translucent-discs') {
         renderTranslucentDiscs(ctx, canvas.width, canvas.height, data, settings);
-      } else if (style === 'organic-mandalas') {
-        renderOrganicMandalas(ctx, canvas.width, canvas.height, data, settings);
-      } else if (style === 'connected-grid') {
-        renderConnectedGrid(ctx, canvas.width, canvas.height, data, settings);
-      } else if (style === 'abstract-score') {
-        renderAbstractScore(ctx, canvas.width, canvas.height, data, settings);
-      } else if (style === 'flowing-bars') {
-        renderFlowingBars(ctx, canvas.width, canvas.height, data, settings);
-      } else if (style === 'glitch-topography') {
-        renderGlitchTopography(ctx, canvas.width, canvas.height, data, settings);
+      } else if (style === 'structural-dots') {
+        renderStructuralDots(ctx, canvas.width, canvas.height, data, settings);
       }
 
       animationRef.current = requestAnimationFrame(render);
@@ -407,80 +407,219 @@ function renderTranslucentDiscs(ctx: CanvasRenderingContext2D, w: number, h: num
   ctx.globalCompositeOperation = 'source-over';
 }
 
-function renderOrganicMandalas(ctx: CanvasRenderingContext2D, w: number, h: number, data: DataPoint[], settings: ArtSettings) {
-  const time = Date.now() * 0.0002 * settings.speed;
-  const count = Math.min(data.length, 8);
-  
-  applyNoiseTexture(ctx, w, h, 0.03);
+function renderDataGridComposition(ctx: CanvasRenderingContext2D, w: number, h: number, data: DataPoint[], settings: ArtSettings) {
+  const cols = Math.floor(6 * settings.density) || 4;
+  const rows = Math.floor(6 * settings.density) || 4;
+  const cellW = w / cols;
+  const cellH = h / rows;
+  const time = Date.now() * 0.001 * settings.speed;
 
-  data.slice(0, count).forEach((d, i) => {
-    const cx = (0.1 + 0.8 * (i / count)) * w;
-    const cy = (0.25 + 0.5 * Math.cos(time * 0.7 + i)) * h;
-    const baseRadius = 120 * settings.density;
-    
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(time * (i % 2 === 0 ? 1 : -1) * 3);
+  applyNoiseTexture(ctx, w, h, 0.05);
 
-    // Multiple layers of rotation and complex geometry
-    for (let layer = 0; layer < 4; layer++) {
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const idx = (r * cols + c) % data.length;
+      const d = data[idx];
+      const x = c * cellW;
+      const y = r * cellH;
+
+      const colorIdx = Math.floor((Number(d[settings.mapping.color || '']) || idx) % settings.palette.length);
+      const color = settings.palette[colorIdx];
+
       ctx.save();
-      ctx.rotate(time * layer * 0.8 + (i * 0.5));
-      const layerColor = settings.palette[(i + layer) % settings.palette.length];
+      ctx.translate(x, y);
       
-      const petals = 6 + layer * 6;
-      for (let j = 0; j < petals; j++) {
-        ctx.rotate((Math.PI * 2) / petals);
-        ctx.strokeStyle = layerColor;
-        ctx.globalAlpha = 0.4 - layer * 0.08;
-        ctx.lineWidth = 1.2 - layer * 0.2;
-        
-        // Intricate petal shape
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        const pLen = 70 * (1 - layer * 0.18);
-        ctx.bezierCurveTo(25, -40, 50, -40, pLen, 0);
-        ctx.bezierCurveTo(50, 40, 25, 40, 0, 0);
-        ctx.stroke();
-        
-        // Inner detail lines
-        if (layer < 2) {
-          ctx.beginPath();
-          ctx.moveTo(10, 0);
-          ctx.lineTo(pLen - 10, 0);
-          ctx.stroke();
-        }
+      // Background cell
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.8;
+      ctx.fillRect(2, 2, cellW - 4, cellH - 4);
+
+      // Internal lines
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 4 * (1 + settings.randomness);
+      ctx.globalAlpha = 0.9;
+      
+      const type = idx % 3;
+      const sizeVal = settings.mapping.size ? Number(d[settings.mapping.size]) || 0.5 : 0.5;
+
+      ctx.beginPath();
+      if (type === 0) {
+        // Diagonal
+        ctx.moveTo(10, 10);
+        ctx.lineTo(cellW - 10, cellH - 10);
+      } else if (type === 1) {
+        // Curved
+        ctx.moveTo(10, cellH / 2);
+        ctx.quadraticCurveTo(cellW / 2, cellH * sizeVal, cellW - 10, cellH / 2);
+      } else {
+        // Cross
+        ctx.moveTo(cellW / 2, 10);
+        ctx.lineTo(cellW / 2, cellH - 10);
+        ctx.moveTo(10, cellH / 2);
+        ctx.lineTo(cellW - 10, cellH / 2);
       }
+      ctx.stroke();
+
+      // Bold numeric annotation
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText(idx.toString().padStart(2, '0'), 8, 20);
+
       ctx.restore();
     }
-    
-    // Concentric growth rings with dash pattern
-    ctx.globalAlpha = 0.08;
-    ctx.strokeStyle = '#000';
-    ctx.setLineDash([2, 4]);
-    for (let r = 1; r < 6; r++) {
-      ctx.beginPath();
-      ctx.arc(0, 0, baseRadius * r * 0.25, 0, Math.PI * 2);
-      ctx.stroke();
+  }
+}
+
+const radialPaths: { x: number, y: number, angle: number, color: string, points: {x: number, y: number}[] }[] = [];
+
+function renderRadialPathway(ctx: CanvasRenderingContext2D, w: number, h: number, data: DataPoint[], settings: ArtSettings) {
+  const time = Date.now() * 0.001 * settings.speed;
+  const centerX = w / 2;
+  const centerY = h / 2;
+  
+  if (radialPaths.length === 0 || radialPaths.length < data.length * 0.2) {
+    const count = Math.floor(data.length * 0.2);
+    for (let i = 0; i < count; i++) {
+      radialPaths.push({
+        x: centerX,
+        y: centerY,
+        angle: (i / count) * Math.PI * 2,
+        color: settings.palette[i % settings.palette.length],
+        points: [{ x: centerX, y: centerY }]
+      });
     }
-    ctx.setLineDash([]);
+  }
+
+  applyNoiseTexture(ctx, w, h, 0.02);
+
+  radialPaths.forEach((p, i) => {
+    const d = data[i % data.length];
+    const speed = (settings.mapping.motion ? Number(d[settings.mapping.motion]) || 1 : 1) * settings.speed * 2;
+    const sizeVal = settings.mapping.size ? Number(d[settings.mapping.size]) || 1 : 1;
+
+    p.angle += (Math.random() - 0.5) * 0.1 * settings.randomness;
+    p.x += Math.cos(p.angle) * speed;
+    p.y += Math.sin(p.angle) * speed;
+
+    // Wrap around or reset
+    if (p.x < 0 || p.x > w || p.y < 0 || p.y > h) {
+      p.x = centerX;
+      p.y = centerY;
+      p.points = [{ x: centerX, y: centerY }];
+    }
+
+    p.points.push({ x: p.x, y: p.y });
+    if (p.points.length > 100) p.points.shift();
+
+    // Draw path
+    ctx.beginPath();
+    ctx.strokeStyle = p.color;
+    ctx.lineWidth = 8 * sizeVal;
+    ctx.lineCap = 'round';
+    ctx.globalAlpha = 0.6;
+    ctx.moveTo(p.points[0].x, p.points[0].y);
+    for (let j = 1; j < p.points.length; j++) {
+      ctx.lineTo(p.points[j].x, p.points[j].y);
+    }
+    ctx.stroke();
+
+    // Draw head
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = 1;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 12 * sizeVal, 0, Math.PI * 2);
+    ctx.fill();
     
-    ctx.restore();
+    // Inner dot
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 4 * sizeVal, 0, Math.PI * 2);
+    ctx.fill();
   });
+}
+
+const overlappingShapes: { type: string, x: number, y: number, size: number, color: string, alpha: number, life: number }[] = [];
+
+function renderShapeOverlap(ctx: CanvasRenderingContext2D, w: number, h: number, data: DataPoint[], settings: ArtSettings) {
+  const time = Date.now() * 0.001 * settings.speed;
+  
+  if (overlappingShapes.length < 50 * settings.density) {
+    const d = data[Math.floor(Math.random() * data.length)];
+    overlappingShapes.push({
+      type: ['grid', 'circle', 'diamond', 'clover'][Math.floor(Math.random() * 4)],
+      x: Math.random() * w,
+      y: Math.random() * h,
+      size: (50 + Math.random() * 150) * (settings.mapping.size ? Number(d[settings.mapping.size]) || 1 : 1),
+      color: settings.palette[Math.floor(Math.random() * settings.palette.length)],
+      alpha: 0,
+      life: 1.0
+    });
+  }
+
+  applyNoiseTexture(ctx, w, h, 0.03);
+
+  for (let i = overlappingShapes.length - 1; i >= 0; i--) {
+    const s = overlappingShapes[i];
+    s.life -= 0.005 * settings.speed;
+    s.alpha = Math.sin(s.life * Math.PI) * 0.8;
+
+    if (s.life <= 0) {
+      overlappingShapes.splice(i, 1);
+      continue;
+    }
+
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    ctx.rotate(s.life * Math.PI * settings.randomness);
+    ctx.fillStyle = s.color;
+    ctx.globalAlpha = s.alpha;
+
+    if (s.type === 'grid') {
+      const gSize = s.size / 3;
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+          ctx.fillRect(c * gSize - s.size / 2, r * gSize - s.size / 2, gSize - 4, gSize - 4);
+        }
+      }
+    } else if (s.type === 'circle') {
+      ctx.beginPath();
+      ctx.arc(0, 0, s.size / 2, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (s.type === 'diamond') {
+      ctx.beginPath();
+      ctx.moveTo(0, -s.size / 2);
+      ctx.lineTo(s.size / 2, 0);
+      ctx.lineTo(0, s.size / 2);
+      ctx.lineTo(-s.size / 2, 0);
+      ctx.closePath();
+      ctx.fill();
+    } else if (s.type === 'clover') {
+      for (let a = 0; a < 4; a++) {
+        ctx.save();
+        ctx.rotate((a * Math.PI) / 2);
+        ctx.beginPath();
+        ctx.arc(s.size / 4, 0, s.size / 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+    ctx.restore();
+  }
 }
 
 function renderConnectedGrid(ctx: CanvasRenderingContext2D, w: number, h: number, data: DataPoint[], settings: ArtSettings) {
   const time = Date.now() * 0.0008 * settings.speed;
-  const cols = 15;
-  const rows = 15;
+  const cols = Math.floor(10 * settings.density) || 8;
+  const rows = Math.floor(10 * settings.density) || 8;
   const cellW = w / cols;
   const cellH = h / rows;
 
   applyNoiseTexture(ctx, w, h, 0.02);
 
-  // Background grid with subtle variation
-  ctx.strokeStyle = '#e8e8e8';
-  ctx.lineWidth = 0.4;
+  // Background grid
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.1;
   for (let c = 0; c <= cols; c++) {
     ctx.beginPath(); ctx.moveTo(c * cellW, 0); ctx.lineTo(c * cellW, h); ctx.stroke();
   }
@@ -496,264 +635,129 @@ function renderConnectedGrid(ctx: CanvasRenderingContext2D, w: number, h: number
       const y = r * cellH + cellH / 2;
       
       const noise = Math.sin(c * 0.5 + r * 0.5 + time * 1.2);
-      const active = noise > 0.15;
-      const radius = active ? 14 * (1 + noise) : 2.5;
+      const active = noise > 0.0;
+      const radius = active ? 25 * (1 + noise) * settings.density : 5;
       
       if (active) {
         const color = settings.palette[idx % settings.palette.length];
         ctx.fillStyle = color;
-        ctx.globalAlpha = 0.75;
+        ctx.globalAlpha = 0.9;
         
-        // Draw organic "bridge" to neighbors (Metaball-like)
-        const neighbors = [[1, 0], [0, 1], [1, 1]];
+        // Thicker bridges
+        const neighbors = [[1, 0], [0, 1]];
         neighbors.forEach(([dc, dr]) => {
           const nc = c + dc;
           const nr = r + dr;
           if (nc < cols && nr < rows) {
-            const nNoise = Math.sin(nc * 0.5 + nr * 0.5 + time * 1.2);
-            if (nNoise > 0.15) {
-              const nx = nc * cellW + cellW / 2;
-              const ny = nr * cellH + cellH / 2;
-              
-              ctx.beginPath();
-              ctx.moveTo(x, y);
-              const bridgeW = radius * 0.5;
-              ctx.lineWidth = bridgeW;
-              ctx.strokeStyle = color;
-              ctx.globalAlpha = 0.25;
-              ctx.lineTo(nx, ny);
-              ctx.stroke();
-            }
+            const nx = nc * cellW + cellW / 2;
+            const ny = nr * cellH + cellH / 2;
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 10 * settings.density;
+            ctx.globalAlpha = 0.4;
+            ctx.moveTo(x, y);
+            ctx.lineTo(nx, ny);
+            ctx.stroke();
           }
         });
 
-        // Node center with inner glow
+        // Bigger nodes
         ctx.beginPath();
         ctx.arc(x, y, radius, 0, Math.PI * 2);
         ctx.fill();
         
-        ctx.fillStyle = '#fff';
-        ctx.globalAlpha = 0.3;
-        ctx.beginPath();
-        ctx.arc(x, y, radius * 0.5, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Technical crosshair
         ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 0.8;
-        ctx.globalAlpha = 0.6;
-        ctx.beginPath();
-        ctx.moveTo(x - radius, y); ctx.lineTo(x + radius, y);
-        ctx.moveTo(x, y - radius); ctx.lineTo(x, y + radius);
+        ctx.lineWidth = 4;
+        ctx.globalAlpha = 0.8;
         ctx.stroke();
-      } else {
-        ctx.fillStyle = '#bbb';
-        ctx.globalAlpha = 0.15;
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.fill();
       }
     }
   }
 }
 
-function renderAbstractScore(ctx: CanvasRenderingContext2D, w: number, h: number, data: DataPoint[], settings: ArtSettings) {
-  const time = Date.now() * 0.0004 * settings.speed;
-  const lineCount = 12;
-  const spacing = h / (lineCount + 2);
-  const margin = 100;
-
-  applyNoiseTexture(ctx, w, h, 0.04);
-
-  // Draw horizontal lines (staves) with subtle variation
-  ctx.strokeStyle = '#bbb';
-  ctx.lineWidth = 0.6;
-  for (let i = 1; i <= lineCount; i++) {
-    const y = i * spacing + spacing;
-    ctx.beginPath();
-    ctx.moveTo(margin, y);
-    ctx.lineTo(w - margin, y);
-    ctx.stroke();
-    
-    // Secondary lines for "musical" feel
-    ctx.globalAlpha = 0.15;
-    ctx.beginPath();
-    ctx.moveTo(margin, y - 5);
-    ctx.lineTo(w - margin, y - 5);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-  }
-
-  // Draw musical-like elements with more complexity
-  data.slice(0, 150).forEach((d, i) => {
-    const lineIdx = (i % lineCount) + 1;
-    const x = (i * 25 + time * 70) % (w - margin * 2) + margin;
-    const y = lineIdx * spacing + spacing;
-    
-    const color = settings.palette[i % settings.palette.length];
-    ctx.fillStyle = color;
-    ctx.strokeStyle = color;
-    
-    const type = i % 8;
-    
-    if (type === 0) {
-      // "Clef" like symbol
-      ctx.font = 'italic 28px serif';
-      ctx.globalAlpha = 0.5;
-      ctx.fillText('∮', x, y + 12);
-    } else if (type === 1) {
-      // Vertical bar with flag and data dot
-      ctx.fillRect(x, y - 25, 2, 50);
-      ctx.beginPath();
-      ctx.arc(x, y + 25, 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(x, y - 25);
-      ctx.bezierCurveTo(x + 20, y - 20, x + 15, y - 10, x + 5, y - 5);
-      ctx.stroke();
-    } else if (type === 2) {
-      // Grouped notes with thick beam
-      ctx.beginPath();
-      ctx.arc(x, y, 5, 0, Math.PI * 2);
-      ctx.arc(x + 20, y - 12, 5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + 20, y - 12);
-      ctx.stroke();
-    } else if (type === 3) {
-      // "Rest" symbol
-      ctx.font = '20px serif';
-      ctx.fillText('≀', x, y + 8);
-    } else if (type === 4) {
-      // Dynamic marking
-      ctx.font = 'italic bold 10px serif';
-      ctx.fillText('pp', x, y + 20);
-    } else {
-      // Floating data dots with connection
-      ctx.globalAlpha = 0.25;
-      const dy = Math.sin(time + i) * 25;
-      ctx.beginPath();
-      ctx.arc(x, y + dy, 3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x, y + dy);
-      ctx.stroke();
-    }
-  });
-}
-
-function renderFlowingBars(ctx: CanvasRenderingContext2D, w: number, h: number, data: DataPoint[], settings: ArtSettings) {
-  const time = Date.now() * 0.0008 * settings.speed;
-  const count = 350;
-  
-  applyNoiseTexture(ctx, w, h, 0.02);
-  
-  // Ghosting effect for trails
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
-  ctx.fillRect(0, 0, w, h);
-
-  for (let i = 0; i < count; i++) {
-    const d = data[i % data.length];
-    const progress = (i / count);
-    const x = progress * w;
-    
-    // Multi-wave motion
-    const wave1 = Math.sin(progress * 5 + time) * 100;
-    const wave2 = Math.cos(progress * 10 - time * 0.6) * 50;
-    const wave3 = Math.sin(time * 0.2 + i * 0.05) * 20;
-    const baseY = h / 2 + wave1 + wave2 + wave3;
-    
-    const sizeVal = settings.mapping.size ? Number(d[settings.mapping.size]) || 1 : 1;
-    const barW = (2.5 + settings.randomness * 8) * sizeVal;
-    const barH = (15 + sizeVal * 40) * (1 + Math.sin(time * 1.5 + i * 0.15) * 0.6);
-    
-    ctx.save();
-    ctx.translate(x, baseY);
-    ctx.rotate(Math.sin(progress * 15 + time) * 1.1);
-    
-    const color = settings.palette[i % settings.palette.length];
-    ctx.fillStyle = color;
-    ctx.globalAlpha = 0.7;
-    
-    // Draw bar with shadow and highlight
-    ctx.shadowBlur = 8;
-    ctx.shadowColor = color;
-    ctx.fillRect(-barW/2, -barH/2, barW, barH);
-    
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = '#fff';
-    ctx.globalAlpha = 0.4;
-    ctx.fillRect(-barW/2, -barH/2, barW/2, 3);
-    
-    // Bottom accent
-    ctx.fillStyle = '#000';
-    ctx.globalAlpha = 0.2;
-    ctx.fillRect(-barW/2, barH/2 - 3, barW, 3);
-    
-    ctx.restore();
-  }
-}
-
-function renderGlitchTopography(ctx: CanvasRenderingContext2D, w: number, h: number, data: DataPoint[], settings: ArtSettings) {
-  const time = Date.now() * 0.0005 * settings.speed;
-  const rows = 40;
-  const cols = 40;
+function renderStructuralDots(ctx: CanvasRenderingContext2D, w: number, h: number, data: DataPoint[], settings: ArtSettings) {
+  const time = Date.now() * 0.001 * settings.speed;
+  const cols = Math.floor(15 * settings.density) || 10;
+  const rows = Math.floor(15 * settings.density) || 10;
   const cellW = w / cols;
   const cellH = h / rows;
 
-  applyNoiseTexture(ctx, w, h, 0.05);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, w, h);
 
-  ctx.save();
-  ctx.translate(w / 2, h / 2);
-  ctx.rotate(Math.PI / 6); // Perspective tilt
-  ctx.translate(-w / 2, -h / 2);
+  applyNoiseTexture(ctx, w, h, 0.1);
 
   for (let r = 0; r < rows; r++) {
-    ctx.beginPath();
-    ctx.strokeStyle = settings.palette[r % settings.palette.length];
-    ctx.lineWidth = 0.8;
-    ctx.globalAlpha = 0.3;
-
     for (let c = 0; c < cols; c++) {
       const idx = (r * cols + c) % data.length;
       const d = data[idx];
-      const val = settings.mapping.size ? Number(d[settings.mapping.size]) || 0.5 : 0.5;
-      
-      const x = c * cellW;
-      const noise = Math.sin(c * 0.2 + time) * Math.cos(r * 0.2 - time) * 50 * settings.randomness;
-      const glitch = Math.random() < 0.01 * settings.randomness ? (Math.random() - 0.5) * 100 : 0;
-      
-      const y = r * cellH + (val * -100) + noise + glitch;
+      const x = c * cellW + cellW / 2;
+      const y = r * cellH + cellH / 2;
 
-      if (c === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+      const colorIdx = Math.floor((idx + time * 2) % settings.palette.length);
+      const color = settings.palette[colorIdx];
+      
+      const sizeVal = settings.mapping.size ? Number(d[settings.mapping.size]) || 0.5 : 0.5;
+      const noise = Math.sin(c * 0.4 + r * 0.4 + time) * settings.randomness;
+      const radius = (cellW * 0.35) * (sizeVal + noise + 0.5);
 
-      // Occasional vertical "glitch" lines
-      if (Math.random() < 0.005 * settings.randomness) {
-        ctx.save();
-        ctx.globalAlpha = 0.1;
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x, y + 200);
-        ctx.stroke();
-        ctx.restore();
+      ctx.save();
+      ctx.translate(x, y);
+
+      // Draw connections (horizontal/vertical bars) - inspired by the image
+      if (idx % 4 === 0) {
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.6;
+        const barW = cellW * 1.8;
+        const barH = radius * 0.5;
+        ctx.fillRect(-barW / 2, -barH / 2, barW, barH);
       }
+      if (idx % 7 === 0) {
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.6;
+        const barW = radius * 0.5;
+        const barH = cellH * 1.8;
+        ctx.fillRect(-barW / 2, -barH / 2, barW, barH);
+      }
+
+      // Draw dots/shapes
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = color;
+      
+      const shapeType = idx % 5;
+      if (shapeType === 0 || shapeType === 1) {
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (shapeType === 2) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.8, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (shapeType === 3) {
+        const s = radius * 1.6;
+        ctx.fillRect(-s / 2, -s / 2, s, s);
+      } else {
+        // Small dense grid in cell
+        const s = radius * 0.4;
+        for(let i=-1; i<=1; i++) {
+          for(let j=-1; j<=1; j++) {
+            ctx.fillRect(i*s*1.2 - s/2, j*s*1.2 - s/2, s, s);
+          }
+        }
+      }
+
+      // Small accent dots
+      if (idx % 3 === 0) {
+        ctx.fillStyle = '#fff';
+        ctx.globalAlpha = 0.4;
+        ctx.beginPath();
+        ctx.arc(radius * 0.4, -radius * 0.4, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
     }
-    ctx.stroke();
   }
-
-  // Draw some floating "data bits"
-  for (let i = 0; i < 10; i++) {
-    const x = Math.random() * w;
-    const y = Math.random() * h;
-    ctx.fillStyle = settings.palette[i % settings.palette.length];
-    ctx.globalAlpha = 0.4;
-    ctx.font = '8px monospace';
-    ctx.fillText(Math.random().toString(16).substring(2, 8).toUpperCase(), x, y);
-  }
-
-  ctx.restore();
 }

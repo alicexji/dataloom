@@ -21,6 +21,8 @@ export default function HeroCanvas({ className }: HeroCanvasProps) {
     class Bar {
       x: number;
       y: number;
+      homeX: number;
+      homeY: number;
       width: number;
       height: number;
       color: string;
@@ -33,6 +35,8 @@ export default function HeroCanvas({ className }: HeroCanvasProps) {
       constructor(width: number, height: number) {
         this.x = Math.random() * width;
         this.y = Math.random() * height;
+        this.homeX = this.x;
+        this.homeY = this.y;
         this.width = Math.random() * 6 + 1;
         this.height = Math.random() * 80 + 20;
         const colors = ['#FF3E00', '#000000', '#FFD700', '#0000FF', '#00FF00', '#FF00FF', '#00FFFF', '#333333', '#FFFFFF'];
@@ -57,14 +61,18 @@ export default function HeroCanvas({ className }: HeroCanvasProps) {
         this.x += Math.cos(this.angle) * this.speed;
         this.y += Math.sin(this.angle) * this.speed;
 
+        // Subtle attraction to home position to prevent "emptying out"
+        this.x += (this.homeX - this.x) * 0.005;
+        this.y += (this.homeY - this.y) * 0.005;
+
         // Mouse interaction - subtle attraction/repulsion
         const dx = mouse.x - this.x;
         const dy = mouse.y - this.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         if (distance < 400) {
           const force = (400 - distance) / 400;
-          this.x -= dx * force * 0.015;
-          this.y -= dy * force * 0.015;
+          this.x -= dx * force * 0.02;
+          this.y -= dy * force * 0.02;
           this.opacity = Math.min(0.8, this.opacity + force * 0.01);
         }
 

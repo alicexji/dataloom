@@ -3,17 +3,17 @@ export interface DataPoint {
 }
 
 export type ArtStyle = 
-  | 'flow-field' 
-  | 'particle-system' 
-  | 'geometric-grid' 
-  | 'organic-blob' 
+  | 'data-grid-composition'
+  | 'radial-pathway'
+  | 'shape-overlap'
+  | 'connected-grid'
+  | 'flow-field'
+  | 'particle-system'
+  | 'geometric-grid'
+  | 'organic-blob'
   | 'noise-landscape'
   | 'translucent-discs'
-  | 'organic-mandalas'
-  | 'connected-grid'
-  | 'abstract-score'
-  | 'flowing-bars'
-  | 'glitch-topography';
+  | 'structural-dots';
 
 export interface ArtSettings {
   palette: string[];
